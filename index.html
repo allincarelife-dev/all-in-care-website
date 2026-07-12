@@ -781,6 +781,7 @@
     </div>
 
     <form class="contact__form reveal reveal-delay-1" id="request">
+      <input type="text" name="website" id="f-website" autocomplete="off" tabindex="-1" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0;" aria-hidden="true">
       <div class="field">
         <label for="f-name">Full Name</label>
         <input type="text" id="f-name" name="name" required>
@@ -825,7 +826,7 @@
         <label for="f-msg">Tell Us About Your Facility</label>
         <textarea id="f-msg" name="message" placeholder="Number of beds, current challenges, timeline..."></textarea>
       </div>
-      <button type="submit" class="btn btn--primary">Send Request</button>
+      <button type="submit" class="btn btn--primary" id="formSubmit">Send Request</button>
       <p class="form__note" id="formNote"></p>
     </form>
   </div>
@@ -920,18 +921,22 @@
   }, { threshold: 0.15 });
   revealEls.forEach(el => revealObserver.observe(el));
 
-  // Request Information form -> mailto
+  // Request Information form -> Azure Function backend (/api/send-request)
   const form = document.getElementById('request');
   const note = document.getElementById('formNote');
-  form.addEventListener('submit', (e) => {
+  const submitBtn = document.getElementById('formSubmit');
+
+  form.addEventListener('submit', async (e) => {
     e.preventDefault();
+
     const name = form.name.value.trim();
     const org = form.org.value.trim();
     const county = form.county.value;
     const email = form.email.value.trim();
     const phone = form.phone.value.trim();
-    const interests = Array.from(form.querySelectorAll('input[name="interest"]:checked')).map(i => i.value).join(', ') || 'Not specified';
+    const interests = Array.from(form.querySelectorAll('input[name="interest"]:checked')).map(i => i.value);
     const message = form.message.value.trim();
+    const website = form.website.value; // honeypot, should always be empty
 
     if (!name || !org || !email) {
       note.textContent = 'Please fill in your name, facility, and email.';
@@ -939,24 +944,36 @@
       return;
     }
 
-    const subject = `Information Request — ${org}`;
-    const body =
-`Name: ${name}
-Facility: ${org}
-County: ${county}
-Email: ${email}
-Phone: ${phone || 'Not provided'}
-Services of interest: ${interests}
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Sending...';
+    note.textContent = '';
+    note.classList.remove('success');
 
-Message:
-${message || 'None provided'}`;
+    try {
+      const res = await fetch('/api/send-request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, org, county, email, phone, interests, message, website })
+      });
 
-    const mailto = `mailto:Info@allincare.life?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    window.location.href = mailto;
-    note.textContent = 'Opening your email client to send this request to our team...';
-    note.classList.add('success');
+      const result = await res.json().catch(() => ({}));
+
+      if (res.ok && result.success) {
+        note.textContent = 'Request sent — our team will follow up within one business day.';
+        note.classList.add('success');
+        form.reset();
+      } else {
+        note.textContent = result.error || 'Something went wrong. Please try again or email us directly at Info@allincare.life.';
+      }
+    } catch (err) {
+      note.textContent = 'Network error — please try again or email us directly at Info@allincare.life.';
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Send Request';
+    }
   });
 </script>
 
 </body>
 </html>
+
