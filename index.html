@@ -158,6 +158,22 @@
   }
   .divider-grow.in-view{ transform:scaleY(1); opacity:1; }
 
+  /* Word-by-word staggered heading reveal */
+  .word{ display:inline-block; overflow:hidden; vertical-align:top; }
+  .word-inner{ display:inline-block; will-change:transform; }
+  .hero h1 .word-inner{
+    transform:translateY(115%);
+    transition:transform 1s var(--ease);
+    transition-delay:calc(var(--wi, 0) * 55ms + .4s);
+  }
+  .hero.loaded h1 .word-inner{ transform:translateY(0); }
+  .section-head h2 .word-inner{
+    transform:translateY(115%);
+    transition:transform .85s var(--ease);
+    transition-delay:calc(var(--wi, 0) * 45ms);
+  }
+  .section-head.in-view h2 .word-inner{ transform:translateY(0); }
+
   /* Soft blended handoffs between differently-colored sections, for a flowing, cinematic feel */
   .container{ position:relative; z-index:1; }
   .seam-light-to-dark, .seam-dark-to-light{
@@ -169,6 +185,8 @@
 
   @media (prefers-reduced-motion: reduce){
     .reveal, .divider-grow{ opacity:1; transform:none; filter:none; transition:none; }
+    .word-inner{ transform:none !important; transition:none !important; }
+    .hero__mark, .hero .eyebrow, .hero__sub, .hero__actions{ opacity:1 !important; transform:none !important; transition:none !important; }
     *{ animation-duration:.001ms !important; animation-iteration-count:1 !important; }
   }
 
@@ -294,8 +312,16 @@
   .hero__mark{
     width:64px; height:64px;
     margin:0 auto 2rem;
+    opacity:0; transform:translateY(18px);
+    transition:opacity .9s var(--ease) .05s, transform .9s var(--ease) .05s;
   }
-  .hero .eyebrow{ justify-content:center; color:var(--khaki); margin-bottom:1.6rem; }
+  .hero.loaded .hero__mark{ opacity:1; transform:translateY(0); }
+  .hero .eyebrow{
+    justify-content:center; color:var(--khaki); margin-bottom:1.6rem;
+    opacity:0; transform:translateY(18px);
+    transition:opacity .9s var(--ease) .2s, transform .9s var(--ease) .2s;
+  }
+  .hero.loaded .eyebrow{ opacity:1; transform:translateY(0); }
   .hero .eyebrow::before{ background:var(--khaki); }
   .hero h1{
     font-size:clamp(2.6rem, 6vw, 4.6rem);
@@ -315,8 +341,16 @@
     max-width:560px;
     color:rgba(250,250,250,.78);
     font-size:1.08rem;
+    opacity:0; transform:translateY(18px);
+    transition:opacity .9s var(--ease) 1.1s, transform .9s var(--ease) 1.1s;
   }
-  .hero__actions{ display:flex; gap:1rem; justify-content:center; flex-wrap:wrap; }
+  .hero.loaded .hero__sub{ opacity:1; transform:translateY(0); }
+  .hero__actions{
+    display:flex; gap:1rem; justify-content:center; flex-wrap:wrap;
+    opacity:0; transform:translateY(18px);
+    transition:opacity .9s var(--ease) 1.3s, transform .9s var(--ease) 1.3s;
+  }
+  .hero.loaded .hero__actions{ opacity:1; transform:translateY(0); }
 
   .hero__scroll{
     position:absolute; bottom:2.4rem; left:50%; transform:translateX(-50%);
@@ -439,7 +473,17 @@
     color:var(--pine);
     text-transform:uppercase;
   }
-  .badge__dot{ width:6px; height:6px; border-radius:50%; background:var(--brass); flex-shrink:0; }
+  .badge__dot{
+    width:6px; height:6px; border-radius:50%; background:var(--brass); flex-shrink:0;
+    animation:dot-pulse 2.4s ease-in-out infinite;
+  }
+  @keyframes dot-pulse{
+    0%,100%{ box-shadow:0 0 0 0 rgba(156,124,63,.55); }
+    50%{ box-shadow:0 0 0 4px rgba(156,124,63,0); }
+  }
+  @media (prefers-reduced-motion: reduce){
+    .badge__dot{ animation:none; }
+  }
 
   @media (max-width:900px){
     .about .container{ grid-template-columns:1fr; gap:3rem; }
@@ -447,7 +491,21 @@
   }
 
   /* ============ PILLARS ============ */
-  .pillars{ background:linear-gradient(160deg, var(--black) 0%, var(--pine-deep) 50%, var(--pine) 100%); color:var(--parchment); position:relative; box-shadow:inset 0 1px 0 var(--gold-hair); }
+  .pillars{ background:linear-gradient(160deg, var(--black) 0%, var(--pine-deep) 50%, var(--pine) 100%); color:var(--parchment); position:relative; box-shadow:inset 0 1px 0 var(--gold-hair); overflow:hidden; }
+  .pillars::before{
+    content:'';
+    position:absolute; inset:-20%;
+    background:radial-gradient(circle at 30% 40%, rgba(199,168,104,.14) 0%, rgba(199,168,104,0) 45%);
+    animation:ambient-drift 14s ease-in-out infinite;
+    pointer-events:none;
+  }
+  @keyframes ambient-drift{
+    0%,100%{ transform:translate(0,0); }
+    50%{ transform:translate(6%,4%); }
+  }
+  @media (prefers-reduced-motion: reduce){
+    .pillars::before{ animation:none; }
+  }
   .pillars .container{
     display:grid; grid-template-columns:1fr 1px 1fr;
     gap:4rem;
@@ -510,8 +568,9 @@
   .card__icon{
     width:38px; height:38px; color:var(--pine);
     margin-bottom:1.3rem;
+    transition:color .3s ease, transform .45s var(--ease);
   }
-  .card:hover .card__icon{ color:var(--brass); }
+  .card:hover .card__icon{ color:var(--brass); transform:scale(1.12) rotate(-6deg); }
   .card h4{
     font-size:1.18rem; color:var(--pine-deep); font-weight:600; font-family:var(--font-body);
     margin-bottom:.6rem;
@@ -651,7 +710,7 @@
     width:min(440px, 80vw);
     text-align:center;
     opacity:0;
-    animation:quote-in 1s var(--ease) .11s forwards;
+    animation:quote-in 1s var(--ease) .7s forwards;
   }
   .loader__quote p{
     font-family:var(--font-display); font-style:italic; font-weight:400;
@@ -963,17 +1022,17 @@
         <p>The paperwork that keeps your license, and your residents, protected.</p>
       </div>
       <div class="cluster__grid">
-        <div class="card">
+        <div class="card reveal">
           <svg class="card__icon" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5h13l6 6v22a2 2 0 0 1-2 2H11a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z"/><path d="M24 5v6h6"/><path d="M13.5 22.5l3.5 3.5 8-8"/></svg>
           <h4>AHCA Documentation Support</h4>
           <p>Survey-ready, always. We build and maintain the policies, care plans, incident logs, and compliance files Florida's AHCA surveyors expect to see &mdash; so an inspection is a formality, not a fire drill, and your license stays protected.</p>
         </div>
-        <div class="card">
+        <div class="card reveal reveal-delay-1">
           <svg class="card__icon" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="28" height="28" rx="2"/><path d="M13 26v-7M20 26v-12M27 26v-4"/></svg>
           <h4>Documentation &amp; Rubric Dashboard</h4>
           <p>Retire the binders and scattered spreadsheets. Your compliance documentation and care rubrics live in one live dashboard, giving administrators and owners a real-time, always-current view of facility health at a glance.</p>
         </div>
-        <div class="card">
+        <div class="card reveal reveal-delay-2">
           <svg class="card__icon" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11c-4-3.2-9-4.3-15-3.2v23.4c6-1.1 11 0 15 3.2 4-3.2 9-4.3 15-3.2V7.8c-6-1.1-11 0-15 3.2z"/><path d="M20 11v23.4"/><path d="M8 16h4l2-5.5 3 10 2-6.5h5.5"/></svg>
           <h4>Geriatric Care Research &amp; Insights</h4>
           <p>Florida's elder-care landscape shifts constantly &mdash; new AHCA guidance, emerging care models, evolving best practices. We maintain ongoing research on geriatric care trends across the state and translate it into guidance your facility can actually act on, not another report that sits on a shelf.</p>
@@ -988,12 +1047,12 @@
         <p>Building the reputation and the numbers that make your facility worth more.</p>
       </div>
       <div class="cluster__grid">
-        <div class="card">
+        <div class="card reveal">
           <svg class="card__icon" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 16v8a2 2 0 0 0 2 2h1.5l2 7h3l-1.5-7H16l16 8V8L16 16H9a2 2 0 0 0-2 2z"/><path d="M30 15a6.5 6.5 0 0 1 0 10"/></svg>
           <h4>Full-Service Marketing &amp; Design</h4>
           <p>Families choose a facility on the strength of a first impression. We design the brand identity, website, brochures, and campaigns that reflect the warmth and professionalism inside your building &mdash; and help fill beds because of it.</p>
         </div>
-        <div class="card">
+        <div class="card reveal reveal-delay-1">
           <svg class="card__icon" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 32V19M16 32V10M25 32V22M34 32V6"/><path d="M27 10l7-4v7"/></svg>
           <h4>Building Valuation &amp; Selling Services</h4>
           <p>Whether you're planning your next chapter or evaluating an acquisition, we provide accurate, defensible facility valuations and guided selling support &mdash; so you capture the true market value of what you've built.</p>
@@ -1008,17 +1067,17 @@
         <p>The people, oversight, and daily systems behind consistent resident care.</p>
       </div>
       <div class="cluster__grid">
-        <div class="card">
+        <div class="card reveal">
           <svg class="card__icon" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="14" cy="13" r="5"/><path d="M4 33v-2.5a8 8 0 0 1 8-8h4a8 8 0 0 1 8 8V33"/><circle cx="29" cy="12" r="4"/><path d="M25 20.5a7 7 0 0 1 11 5.5"/><path d="M33 5v6M30 8h6"/></svg>
           <h4>Workforce Connecting &amp; Hiring Assistance</h4>
           <p>Staffing shortages are the single biggest threat to consistent care. We connect you with vetted CNAs, nurses, and administrative staff, streamlining hiring so your team spends its time on residents, not endless recruiting.</p>
         </div>
-        <div class="card">
+        <div class="card reveal reveal-delay-1">
           <svg class="card__icon" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5h14l6 6v6"/><path d="M9 5v26a2 2 0 0 0 2 2h9"/><path d="M13 14h10M13 20h6"/><circle cx="25" cy="27" r="6.5"/><path d="M29.7 31.7L35 37"/></svg>
           <h4>Building Auditing &amp; General HR Aid</h4>
           <p>We audit your physical plant and HR practices before a regulator or a lawsuit does &mdash; from safety compliance to personnel files &mdash; helping you build an operation that's efficient, compliant, and protected.</p>
         </div>
-        <div class="card">
+        <div class="card reveal reveal-delay-2">
           <svg class="card__icon" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7c8 0 12.5 6 12.5 13S28 33 20 33c-6-6-6-19 0-26z"/><path d="M20 7v26"/><circle cx="9" cy="29" r="5"/><path d="M7 29h4M9 27v4"/></svg>
           <h4>Dietary Menus &amp; Dietary Budget</h4>
           <p>Great dietary care is both a regulatory requirement and a quality-of-life cornerstone. We design AHCA-compliant, resident-approved menus while helping you control food costs and reduce waste &mdash; protecting wellbeing and your bottom line together.</p>
@@ -1033,17 +1092,17 @@
         <p>Modern, secure systems built for how care facilities actually operate.</p>
       </div>
       <div class="cluster__grid">
-        <div class="card">
+        <div class="card reveal">
           <svg class="card__icon" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 27a6 6 0 1 1 1.4-11.85A8.5 8.5 0 0 1 28.6 13.2 6.5 6.5 0 0 1 27.5 26H11z"/><rect x="16.5" y="27" width="9" height="6.5" rx="1.2"/><path d="M18.8 27v-1.8a2.2 2.2 0 0 1 4.4 0V27"/></svg>
           <h4>Azure Cloud Infrastructure</h4>
           <p>We design and implement secure Microsoft Azure environments purpose-built for nursing homes and assisted living facilities &mdash; role-based login credentialing, facility-wide connectivity, and modern cloud infrastructure without compromising security.</p>
         </div>
-        <div class="card">
+        <div class="card reveal reveal-delay-1">
           <svg class="card__icon" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 5l14 8v14l-14 8-14-8V13z"/><path d="M14 20l4.5 4.5 8-8"/></svg>
           <h4>Stablecoin Secure Payment Infrastructure</h4>
           <p>We implement secure, blockchain-based stablecoin payment infrastructure &mdash; a faster, more transparent, and more secure alternative to legacy processing, reducing transaction costs and settlement delays for your facility.</p>
         </div>
-        <div class="card">
+        <div class="card reveal reveal-delay-2">
           <svg class="card__icon" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="18" r="6"/><path d="M18 5v4M18 27v4M5 18h4M27 18h4M9.6 9.6l2.8 2.8M23.6 23.6l2.8 2.8M9.6 26.4l2.8-2.8M23.6 12.4l2.8-2.8"/><path d="M27 27l7 7M30.5 34h3.5v-3.5"/></svg>
           <h4>New Equipment &amp; Workflow Management</h4>
           <p>From mobility aids to monitoring systems, we manage the full lifecycle of new equipment adoption &mdash; sourcing, installation, and staff workflow integration &mdash; so new tools improve care instead of disrupting it.</p>
@@ -1374,6 +1433,64 @@
         ticking = false;
       });
     }, { passive:true });
+  }
+
+  // ---------- Word-by-word heading reveal ----------
+  // (Splits hero h1 / section headings into per-word spans so the existing
+  // .word-inner transition rules have something to animate.)
+  function splitWords(el){
+    if (!el || el.dataset.split) return;
+    el.dataset.split = 'true';
+    (function walk(node){
+      Array.from(node.childNodes).forEach(child => {
+        if (child.nodeType === 3) {
+          const parts = child.textContent.split(/(\s+)/);
+          const frag = document.createDocumentFragment();
+          parts.forEach(part => {
+            if (part === '') return;
+            if (/^\s+$/.test(part)) {
+              frag.appendChild(document.createTextNode(part));
+            } else {
+              const word = document.createElement('span');
+              word.className = 'word';
+              const inner = document.createElement('span');
+              inner.className = 'word-inner';
+              inner.textContent = part;
+              word.appendChild(inner);
+              frag.appendChild(word);
+            }
+          });
+          node.replaceChild(frag, child);
+        } else if (child.nodeType === 1) {
+          walk(child);
+        }
+      });
+    })(el);
+    el.querySelectorAll('.word-inner').forEach((w, i) => w.style.setProperty('--wi', i));
+  }
+
+  if (!prefersReducedMotion) {
+    splitWords(document.querySelector('.hero h1'));
+    document.querySelectorAll('.section-head h2').forEach(splitWords);
+
+    // Reveal the hero headline/content in sync with the loader fading away,
+    // rather than while it's still hidden underneath it.
+    const loaderEl = document.getElementById('loader');
+    if (hero && loaderEl) {
+      if (loaderEl.classList.contains('loader--hidden')) {
+        hero.classList.add('loaded');
+      } else {
+        const loaderWatcher = new MutationObserver(() => {
+          if (loaderEl.classList.contains('loader--hidden')) {
+            hero.classList.add('loaded');
+            loaderWatcher.disconnect();
+          }
+        });
+        loaderWatcher.observe(loaderEl, { attributes:true, attributeFilter:['class'] });
+      }
+    }
+  } else if (hero) {
+    hero.classList.add('loaded');
   }
 
   // ---------- Subtle card tilt (fine-pointer devices only) ----------
